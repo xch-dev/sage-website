@@ -347,14 +347,14 @@ nav > ul li a:active {
 	
 } 
 
-.playStore {
+.downloadBadge {
 	height: 75px;
 	margin-right: 12px;
 }
 
 @media only screen and (max-width: 992px) {
 
-	.playStore {
+	.downloadBadge {
 		margin-right: 12px;
 		margin-bottom: 0px;
 	}
@@ -363,18 +363,12 @@ nav > ul li a:active {
 
 @media only screen and (max-width: 528px) {
 
-	.playStore {
+	.downloadBadge {
 		margin-right: 0px;
 		margin-bottom: 0px;
 	}
 	
 } 
-
-.appStore {
-	height: 75px;
-}
-
-
 
 // iPhone Device Preview
 
