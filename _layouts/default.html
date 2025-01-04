@@ -68,15 +68,19 @@
             <div class="downloadButtonsContainer">
               {% if site.playstore_link %}
               <a class="playStoreLink" href="{{site.playstore_link}}"
-                ><img class="playStore" src="assets/playstore.png"
+                ><img class="downloadBadge" src="assets/playstore.png"
               /></a>
               {% endif %}
-              <a class="playStoreLink" href="{{site.download}}"
-                ><img class="playStore" src="assets/desktop-badge.png"
-              /></a>
+              {% if site.appstore_link %}
               <a class="appStoreLink" href="{{site.appstore_link}}"
-                ><img class="appStore" src="assets/testflight-badge.png"
+                ><img class="downloadBadge" src="assets/testflight-badge.png"
               /></a>
+              {% endif %}
+              {% if site.download %}
+              <a class="desktopDownloadLink" href="{{site.download}}"
+                ><img class="downloadBadge" src="assets/desktop-badge.png"
+              /></a>
+              {% endif %}
             </div>
           </div>
           {% include features.html %} {% include footer.html %} {% include
