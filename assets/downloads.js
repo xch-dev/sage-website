@@ -12,8 +12,6 @@ document.addEventListener("DOMContentLoaded", function () {
     const ua = window.navigator.userAgent;
     if (/Windows NT|Win64|WOW64|Win32/.test(ua)) return "windows";
     if (/Macintosh|Mac OS X|MacPPC|MacIntel/.test(ua)) return "macos";
-    if (/Linux|X11|Ubuntu|Debian|Fedora|AppImage|.deb|.rpm/.test(ua))
-      return "linux";
     return null;
   }
 
@@ -30,21 +28,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     if (platform === "macos") {
       return assets.find((a) => /universal\\.dmg$/.test(a.name));
-    }
-    if (platform === "linux") {
-      let appimage = assets.find((a) =>
-        /(amd64|x86_64)\\.AppImage$/.test(a.name)
-      );
-      if (!appimage)
-        appimage = assets.find((a) => /(amd64|x86_64)\\.deb$/.test(a.name));
-      if (!appimage)
-        appimage = assets.find((a) => /x86_64\\.rpm$/.test(a.name));
-      if (!appimage)
-        appimage = assets.find((a) => /aarch64\\.AppImage$/.test(a.name));
-      if (!appimage) appimage = assets.find((a) => /arm64\\.deb$/.test(a.name));
-      if (!appimage)
-        appimage = assets.find((a) => /aarch64\\.rpm$/.test(a.name));
-      return appimage;
     }
     return null;
   }
@@ -74,11 +57,6 @@ document.addEventListener("DOMContentLoaded", function () {
       icon.className = "fab fa-apple";
       iconSpan.appendChild(icon);
       labelText = "Download for macOS";
-    } else if (platform === "linux") {
-      const icon = document.createElement("i");
-      icon.className = "fab fa-linux";
-      iconSpan.appendChild(icon);
-      labelText = "Download for Linux";
     } else {
       ["fa-windows", "fa-apple", "fa-linux"].forEach((iconClass) => {
         const icon = document.createElement("i");
@@ -97,8 +75,6 @@ document.addEventListener("DOMContentLoaded", function () {
       visibleButtonText = " Download for Windows";
     } else if (platform === "macos" && !textOverride) {
       visibleButtonText = " Download for macOS";
-    } else if (platform === "linux" && !textOverride) {
-      visibleButtonText = " Download for Linux";
     } else if (textOverride) {
       visibleButtonText = textOverride;
       if (textOverride.trim().toLowerCase().startsWith("view")) {
@@ -139,8 +115,6 @@ document.addEventListener("DOMContentLoaded", function () {
           asset = assets.find((a) => /\.exe$|\.msi$/.test(a.name));
         else if (platform === "macos")
           asset = assets.find((a) => /\.dmg$/.test(a.name));
-        else if (platform === "linux")
-          asset = assets.find((a) => /\.AppImage$|\.deb$|\.rpm$/.test(a.name));
         console.log("Fallback asset for detected platform:", asset);
       }
 
@@ -153,40 +127,14 @@ document.addEventListener("DOMContentLoaded", function () {
         createStyledButton(link, platform, null, asset.name);
         container.appendChild(link);
       } else {
-        console.log(
-          "No specific asset found for platform or platform not detected. Showing available desktop assets or fallback."
-        );
-        const desktopAssets = assets.filter(
-          (a) =>
-            /\\.(dmg|AppImage|deb|rpm|exe|msi)$/.test(a.name) &&
-            !a.name.includes("universal-release.aab") &&
-            !a.name.includes("universal-release.apk") &&
-            !a.name.includes("Sage.ipa")
-        );
-
-        if (desktopAssets.length > 0) {
-          desktopAssets.forEach((a) => {
-            const link = document.createElement("a");
-            link.className = "desktopDownloadLink";
-            link.href = a.browser_download_url;
-            link.target = "_blank";
-            link.rel = "noopener";
-            createStyledButton(link, "all", " " + a.name);
-            container.appendChild(link);
-          });
-        } else {
-          console.log(
-            "No suitable desktop assets found. Using generic fallback."
-          );
-          const link = document.createElement("a");
-          link.className = "desktopDownloadLink";
-          link.href = "https://github.com/xch-dev/sage/releases/latest";
-          link.target = "_blank";
-          link.rel = "noopener";
-          createStyledButton(link, "all", " View Releases");
-          container.appendChild(link);
-        }
-        return;
+        console.log("Platform not detected. Using generic fallback.");
+        const link = document.createElement("a");
+        link.className = "desktopDownloadLink";
+        link.href = "https://github.com/xch-dev/sage/releases/latest";
+        link.target = "_blank";
+        link.rel = "noopener";
+        createStyledButton(link, "all", "Download for Desktop");
+        container.appendChild(link);
       }
     })
     .catch((error) => {
@@ -196,7 +144,7 @@ document.addEventListener("DOMContentLoaded", function () {
       link.href = "https://github.com/xch-dev/sage/releases/latest";
       link.target = "_blank";
       link.rel = "noopener";
-      createStyledButton(link, "all", " View All Releases");
+      createStyledButton(link, "all", "Download for Desktop");
       container.appendChild(link);
     });
 });
