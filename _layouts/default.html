@@ -57,6 +57,7 @@
               <img
                 class="appIconLarge"
                 src="{{ site.app_icon | relative_url }}"
+                alt="App icon for {{ site.app_name }}"
               />
             </div>
             <div class="appNamePriceContainer">
@@ -68,17 +69,17 @@
             <div class="downloadButtonsContainer">
               {% if site.playstore_link %}
               <a class="playStoreLink" href="{{site.playstore_link}}"
-                ><img class="downloadBadge" src="assets/playstore.png"
+                ><img
+                  class="downloadBadge"
+                  src="assets/playstore.png"
+                  alt="Download on Google Play"
               /></a>
-              {% endif %}
-              {% if site.appstore_link %}
+              {% endif %} {% if site.appstore_link %}
               <a class="appStoreLink" href="{{site.appstore_link}}"
-                ><img class="downloadBadge" src="assets/testflight-badge.png"
-              /></a>
-              {% endif %}
-              {% if site.download %}
-              <a class="desktopDownloadLink" href="{{site.download}}"
-                ><img class="downloadBadge" src="assets/desktop-badge.png"
+                ><img
+                  class="downloadBadge"
+                  src="assets/testflight-badge.png"
+                  alt="Download on TestFlight"
               /></a>
               {% endif %}
             </div>
