@@ -1,0 +1,202 @@
+// Platform detection and GitHub release fetch for Sage desktop downloads
+document.addEventListener("DOMContentLoaded", function () {
+  const container = document.querySelector(".downloadButtonsContainer");
+  if (!container) return;
+
+  // Remove any existing desktop download link
+  const oldDesktop = container.querySelector(".desktopDownloadLink");
+  if (oldDesktop) oldDesktop.remove();
+
+  // Platform detection
+  function getPlatform() {
+    const ua = window.navigator.userAgent;
+    if (/Windows NT|Win64|WOW64|Win32/.test(ua)) return "windows";
+    if (/Macintosh|Mac OS X|MacPPC|MacIntel/.test(ua)) return "macos";
+    if (/Linux|X11|Ubuntu|Debian|Fedora|AppImage|.deb|.rpm/.test(ua))
+      return "linux";
+    return null;
+  }
+
+  // Asset mapping for Sage
+  function getAssetInfo(platform, assets) {
+    if (platform === "windows") {
+      let exe = assets.find((a) => /x64-setup\\.exe$/.test(a.name));
+      if (!exe)
+        exe = assets.find((a) => /Sage_.*_x64_en-US\\.msi$/.test(a.name));
+      if (!exe) exe = assets.find((a) => /arm64-setup\\.exe$/.test(a.name));
+      if (!exe)
+        exe = assets.find((a) => /Sage_.*_arm64_en-US\\.msi$/.test(a.name));
+      return exe;
+    }
+    if (platform === "macos") {
+      return assets.find((a) => /universal\\.dmg$/.test(a.name));
+    }
+    if (platform === "linux") {
+      let appimage = assets.find((a) =>
+        /(amd64|x86_64)\\.AppImage$/.test(a.name)
+      );
+      if (!appimage)
+        appimage = assets.find((a) => /(amd64|x86_64)\\.deb$/.test(a.name));
+      if (!appimage)
+        appimage = assets.find((a) => /x86_64\\.rpm$/.test(a.name));
+      if (!appimage)
+        appimage = assets.find((a) => /aarch64\\.AppImage$/.test(a.name));
+      if (!appimage) appimage = assets.find((a) => /arm64\\.deb$/.test(a.name));
+      if (!appimage)
+        appimage = assets.find((a) => /aarch64\\.rpm$/.test(a.name));
+      return appimage;
+    }
+    return null;
+  }
+
+  // Helper function to create the button content
+  function createStyledButton(
+    linkElement,
+    platform,
+    textOverride = null,
+    assetName = null
+  ) {
+    linkElement.innerHTML = "";
+    linkElement.classList.add("download-button-styled");
+
+    const iconSpan = document.createElement("span");
+    iconSpan.className = "platform-icons";
+
+    let labelText = "";
+
+    if (platform === "windows") {
+      const icon = document.createElement("i");
+      icon.className = "fab fa-windows";
+      iconSpan.appendChild(icon);
+      labelText = "Download for Windows";
+    } else if (platform === "macos") {
+      const icon = document.createElement("i");
+      icon.className = "fab fa-apple";
+      iconSpan.appendChild(icon);
+      labelText = "Download for macOS";
+    } else if (platform === "linux") {
+      const icon = document.createElement("i");
+      icon.className = "fab fa-linux";
+      iconSpan.appendChild(icon);
+      labelText = "Download for Linux";
+    } else {
+      ["fa-windows", "fa-apple", "fa-linux"].forEach((iconClass) => {
+        const icon = document.createElement("i");
+        icon.className = "fab " + iconClass;
+        iconSpan.appendChild(icon);
+      });
+      labelText = "Download for Desktop";
+    }
+    linkElement.appendChild(iconSpan);
+
+    const textSpan = document.createElement("span");
+    textSpan.className = "download-text";
+    let visibleButtonText = "";
+
+    if (platform === "windows" && !textOverride) {
+      visibleButtonText = " Download for Windows";
+    } else if (platform === "macos" && !textOverride) {
+      visibleButtonText = " Download for macOS";
+    } else if (platform === "linux" && !textOverride) {
+      visibleButtonText = " Download for Linux";
+    } else if (textOverride) {
+      visibleButtonText = textOverride;
+      if (textOverride.trim().toLowerCase().startsWith("view")) {
+        labelText = textOverride.trim();
+      } else {
+        labelText = "Download" + textOverride;
+      }
+    } else if (assetName) {
+      visibleButtonText = " " + assetName;
+      labelText = "Download " + assetName;
+    } else {
+      visibleButtonText = " Download for Desktop";
+    }
+
+    textSpan.textContent = visibleButtonText;
+    linkElement.appendChild(textSpan);
+    linkElement.setAttribute("aria-label", labelText);
+  }
+
+  // Fetch latest release from GitHub
+  fetch("https://api.github.com/repos/xch-dev/sage/releases/latest")
+    .then((r) => {
+      if (!r.ok) {
+        throw new Error(`GitHub API error: ${r.status}`);
+      }
+      return r.json();
+    })
+    .then((release) => {
+      console.log("GitHub release:", release);
+      const assets = release.assets || [];
+      const platform = getPlatform();
+      console.log("Detected platform:", platform);
+      let asset = getAssetInfo(platform, assets);
+      console.log("Selected asset:", asset);
+
+      if (!asset && platform) {
+        if (platform === "windows")
+          asset = assets.find((a) => /\.exe$|\.msi$/.test(a.name));
+        else if (platform === "macos")
+          asset = assets.find((a) => /\.dmg$/.test(a.name));
+        else if (platform === "linux")
+          asset = assets.find((a) => /\.AppImage$|\.deb$|\.rpm$/.test(a.name));
+        console.log("Fallback asset for detected platform:", asset);
+      }
+
+      if (asset) {
+        const link = document.createElement("a");
+        link.className = "desktopDownloadLink";
+        link.href = asset.browser_download_url;
+        link.target = "_blank";
+        link.rel = "noopener";
+        createStyledButton(link, platform, null, asset.name);
+        container.appendChild(link);
+      } else {
+        console.log(
+          "No specific asset found for platform or platform not detected. Showing available desktop assets or fallback."
+        );
+        const desktopAssets = assets.filter(
+          (a) =>
+            /\\.(dmg|AppImage|deb|rpm|exe|msi)$/.test(a.name) &&
+            !a.name.includes("universal-release.aab") &&
+            !a.name.includes("universal-release.apk") &&
+            !a.name.includes("Sage.ipa")
+        );
+
+        if (desktopAssets.length > 0) {
+          desktopAssets.forEach((a) => {
+            const link = document.createElement("a");
+            link.className = "desktopDownloadLink";
+            link.href = a.browser_download_url;
+            link.target = "_blank";
+            link.rel = "noopener";
+            createStyledButton(link, "all", " " + a.name);
+            container.appendChild(link);
+          });
+        } else {
+          console.log(
+            "No suitable desktop assets found. Using generic fallback."
+          );
+          const link = document.createElement("a");
+          link.className = "desktopDownloadLink";
+          link.href = "https://github.com/xch-dev/sage/releases/latest";
+          link.target = "_blank";
+          link.rel = "noopener";
+          createStyledButton(link, "all", " View Releases");
+          container.appendChild(link);
+        }
+        return;
+      }
+    })
+    .catch((error) => {
+      console.error("Error fetching or processing releases:", error);
+      const link = document.createElement("a");
+      link.className = "desktopDownloadLink";
+      link.href = "https://github.com/xch-dev/sage/releases/latest";
+      link.target = "_blank";
+      link.rel = "noopener";
+      createStyledButton(link, "all", " View All Releases");
+      container.appendChild(link);
+    });
+});
