@@ -18,16 +18,14 @@ document.addEventListener("DOMContentLoaded", function () {
   // Asset mapping for Sage
   function getAssetInfo(platform, assets) {
     if (platform === "windows") {
-      let exe = assets.find((a) => /x64-setup\\.exe$/.test(a.name));
-      if (!exe)
-        exe = assets.find((a) => /Sage_.*_x64_en-US\\.msi$/.test(a.name));
-      if (!exe) exe = assets.find((a) => /arm64-setup\\.exe$/.test(a.name));
-      if (!exe)
-        exe = assets.find((a) => /Sage_.*_arm64_en-US\\.msi$/.test(a.name));
+      let exe = assets.find((a) => a.name.includes("x64-setup.exe"));
+      if (!exe) exe = assets.find((a) => a.name.includes("_x64_en-US.msi"));
+      if (!exe) exe = assets.find((a) => a.name.includes("arm64-setup.exe"));
+      if (!exe) exe = assets.find((a) => a.name.includes("_arm64_en-US.msi"));
       return exe;
     }
     if (platform === "macos") {
-      return assets.find((a) => /universal\\.dmg$/.test(a.name));
+      return assets.find((a) => a.name.includes("universal.dmg"));
     }
     return null;
   }
