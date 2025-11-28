@@ -1,12 +1,5 @@
 // Platform detection and GitHub release fetch for Sage desktop downloads
 document.addEventListener("DOMContentLoaded", function () {
-  const container = document.querySelector(".downloadButtonsContainer");
-  if (!container) return;
-
-  // Remove any existing desktop download link
-  const oldDesktop = container.querySelector(".desktopDownloadLink");
-  if (oldDesktop) oldDesktop.remove();
-
   // Platform detection
   function getPlatform() {
     const ua = window.navigator.userAgent;
@@ -30,66 +23,68 @@ document.addEventListener("DOMContentLoaded", function () {
     return null;
   }
 
-  // Helper function to create the button content
-  function createStyledButton(
-    linkElement,
-    platform,
-    textOverride = null,
-    assetName = null
-  ) {
-    linkElement.innerHTML = "";
-    linkElement.classList.add("download-button-styled");
+  // Get platform icon class
+  function getPlatformIcon(platform) {
+    if (platform === "windows") return "fab fa-windows";
+    if (platform === "macos") return "fab fa-apple";
+    return "fas fa-download";
+  }
 
-    const iconSpan = document.createElement("span");
-    iconSpan.className = "platform-icons";
+  // Get platform label
+  function getPlatformLabel(platform) {
+    if (platform === "windows") return "Download for Windows";
+    if (platform === "macos") return "Download for macOS";
+    return "Download Now";
+  }
 
-    let labelText = "";
+  // Update hero download button
+  function updateHeroButton(url, platform) {
+    const heroBtn = document.querySelector(".hero-buttons .btn-primary");
+    if (!heroBtn) return;
 
-    if (platform === "windows") {
-      const icon = document.createElement("i");
-      icon.className = "fab fa-windows";
-      iconSpan.appendChild(icon);
-      labelText = "Download for Windows";
-    } else if (platform === "macos") {
-      const icon = document.createElement("i");
-      icon.className = "fab fa-apple";
-      iconSpan.appendChild(icon);
-      labelText = "Download for macOS";
-    } else {
-      ["fa-windows", "fa-apple", "fa-linux"].forEach((iconClass) => {
-        const icon = document.createElement("i");
-        icon.className = "fab " + iconClass;
-        iconSpan.appendChild(icon);
-      });
-      labelText = "Download for Desktop";
+    heroBtn.href = url;
+
+    // Update icon
+    const icon = heroBtn.querySelector(".btn-icon");
+    if (icon) {
+      icon.className = "btn-icon " + getPlatformIcon(platform);
     }
-    linkElement.appendChild(iconSpan);
 
-    const textSpan = document.createElement("span");
-    textSpan.className = "download-text";
-    let visibleButtonText = "";
+    // Update text
+    const textSpan = heroBtn.querySelector(".btn-text");
+    if (textSpan) {
+      textSpan.textContent = getPlatformLabel(platform);
+    }
+  }
 
-    if (platform === "windows" && !textOverride) {
-      visibleButtonText = " Download for Windows";
-    } else if (platform === "macos" && !textOverride) {
-      visibleButtonText = " Download for macOS";
-    } else if (textOverride) {
-      visibleButtonText = textOverride;
-      if (textOverride.trim().toLowerCase().startsWith("view")) {
-        labelText = textOverride.trim();
-      } else {
-        labelText = "Download" + textOverride;
+  // Update header download button
+  function updateHeaderButton(url, platform) {
+    const headerBtn = document.querySelector(".nav-cta");
+    if (!headerBtn) return;
+    headerBtn.href = url;
+  }
+
+  // Update platform grid links
+  function updatePlatformLinks(assets) {
+    const platformItems = document.querySelectorAll(".platform-item");
+
+    platformItems.forEach((item) => {
+      const nameEl = item.querySelector(".platform-name");
+      if (!nameEl) return;
+
+      const platformName = nameEl.textContent.trim().toLowerCase();
+      let asset = null;
+
+      if (platformName === "macos") {
+        asset = getAssetInfo("macos", assets);
+      } else if (platformName === "windows") {
+        asset = getAssetInfo("windows", assets);
       }
-    } else if (assetName) {
-      visibleButtonText = " " + assetName;
-      labelText = "Download " + assetName;
-    } else {
-      visibleButtonText = " Download for Desktop";
-    }
 
-    textSpan.textContent = visibleButtonText;
-    linkElement.appendChild(textSpan);
-    linkElement.setAttribute("aria-label", labelText);
+      if (asset) {
+        item.href = asset.browser_download_url;
+      }
+    });
   }
 
   // Fetch latest release from GitHub
@@ -117,32 +112,22 @@ document.addEventListener("DOMContentLoaded", function () {
       }
 
       if (asset) {
-        const link = document.createElement("a");
-        link.className = "desktopDownloadLink";
-        link.href = asset.browser_download_url;
-        link.target = "_blank";
-        link.rel = "noopener";
-        createStyledButton(link, platform, null, asset.name);
-        container.appendChild(link);
+        updateHeroButton(asset.browser_download_url, platform);
+        updateHeaderButton(asset.browser_download_url, platform);
       } else {
-        console.log("Platform not detected. Using generic fallback.");
-        const link = document.createElement("a");
-        link.className = "desktopDownloadLink";
-        link.href = "https://github.com/xch-dev/sage/releases/latest";
-        link.target = "_blank";
-        link.rel = "noopener";
-        createStyledButton(link, "all", "Download for Desktop");
-        container.appendChild(link);
+        console.log(
+          "Platform not detected or no matching asset. Using releases page."
+        );
+        const releasesUrl = "https://github.com/xch-dev/sage/releases/latest";
+        updateHeroButton(releasesUrl, null);
+        updateHeaderButton(releasesUrl, null);
       }
+
+      // Update platform grid links (macOS and Windows get direct downloads)
+      updatePlatformLinks(assets);
     })
     .catch((error) => {
       console.error("Error fetching or processing releases:", error);
-      const link = document.createElement("a");
-      link.className = "desktopDownloadLink";
-      link.href = "https://github.com/xch-dev/sage/releases/latest";
-      link.target = "_blank";
-      link.rel = "noopener";
-      createStyledButton(link, "all", "Download for Desktop");
-      container.appendChild(link);
+      // Keep default links on error
     });
 });
